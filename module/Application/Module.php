@@ -11,11 +11,21 @@ namespace Application;
 
 use Zend\Mvc\ModuleRouteListener;
 use Zend\Mvc\MvcEvent;
+use Zend\Session\Container;
 
 class Module
 {
     public function onBootstrap(MvcEvent $e)
     {
+    	// configure session to use database
+    	$config = $e->getApplication()->getServiceManager()->get('config');
+    	$dbAdapter = new \Zend\Db\Adapter\Adapter($config['db']);
+    	$sessionOptions = new \Zend\Session\SaveHandler\DbTableGatewayOptions();
+    	$sessionTableGateway = new \Zend\Db\TableGateway\TableGateway('session', $dbAdapter);
+    	$saveHandler = new \Zend\Session\SaveHandler\DbTableGateway($sessionTableGateway, $sessionOptions);
+    	$sessionManager = new \Zend\Session\SessionManager(NULL, NULL, $saveHandler);
+    	Container::setDefaultManager($sessionManager);
+    	
         $eventManager        = $e->getApplication()->getEventManager();
         $moduleRouteListener = new ModuleRouteListener();
         $moduleRouteListener->attach($eventManager);
